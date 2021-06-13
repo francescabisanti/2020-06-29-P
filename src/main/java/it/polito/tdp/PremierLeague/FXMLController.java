@@ -56,54 +56,81 @@ public class FXMLController {
     @FXML
     void doConnessioneMassima(ActionEvent event) {
     	this.txtResult.clear();
-    	this.txtResult.appendText("Grafo Creato:"+"\n");
-    	String mese= this.cmbMese.getSelectionModel().getSelectedItem();
-    	int mm= this.mese(mese);
-    	String minS= this.txtMinuti.getText();
+    	String mS= this.txtMinuti.getText();
     	int minuti;
     	try {
-    		minuti=Integer.parseInt(minS);
-    	}catch(NumberFormatException e) {
-    		this.txtResult.setText("Inserisci un numero di minuti valido!");
+    		minuti=Integer.parseInt(mS);
+    		
+    	}catch(NumberFormatException e ) {
+    		this.txtResult.setText("Inserisci un valore numerico valido!");
     		return;
     	}
-    	this.model.creaGrafo(minuti, mm);
-    	List <Adiacenza> result= new ArrayList<>(this.model.connessioniMax(minuti, mm, this.model.getIdMap() ));
-    	for(Adiacenza aa:result) {
-    		this.txtResult.appendText(aa.toString()+"\n");
+    	String mese= this.cmbMese.getValue();
+    	if(mese==null) {
+    		this.txtResult.appendText("Seleziona un mese!");
+    		return;
     	}
+    	int meseInt = this.ottieniMese(mese);
+    	List<Adiacenza> result= this.model.getAdiacenza(minuti, meseInt);
+    	for(Adiacenza a: result)
+    		this.txtResult.appendText(a.toString());
+    	
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	this.txtResult.clear();
-    	this.txtResult.appendText("Grafo Creato:"+"\n");
-    	String mese= this.cmbMese.getSelectionModel().getSelectedItem();
-    	int mm= this.mese(mese);
-    	String minS= this.txtMinuti.getText();
+    	String mS= this.txtMinuti.getText();
     	int minuti;
     	try {
-    		minuti=Integer.parseInt(minS);
-    	}catch(NumberFormatException e) {
-    		this.txtResult.setText("Inserisci un numero di minuti valido!");
+    		minuti=Integer.parseInt(mS);
+    		
+    	}catch(NumberFormatException e ) {
+    		this.txtResult.setText("Inserisci un valore numerico valido!");
     		return;
     	}
-    	this.model.creaGrafo(minuti, mm);
+    	String mese= this.cmbMese.getValue();
+    	if(mese==null) {
+    		this.txtResult.appendText("Seleziona un mese!");
+    		return;
+    	}
+    	int meseInt = this.ottieniMese(mese);
     	
+    	this.txtResult.appendText("Grafo creato...\n");
+    	this.model.creaGrafo(minuti, meseInt);
     	this.txtResult.appendText("#VERTICI: "+this.model.getNVertici()+"\n");
     	this.txtResult.appendText("#ARCHI: "+this.model.getNArchi()+"\n");
-    	this.cmbM1.getItems().addAll(this.model.getGrafo().vertexSet());
-    	this.cmbM2.getItems().addAll(this.model.getGrafo().vertexSet());
+    	this.cmbM1.getItems().addAll(model.getGrafo().vertexSet());
+    	this.cmbM2.getItems().addAll(model.getGrafo().vertexSet());
+    	
     	
     }
 
     @FXML
     void doCollegamento(ActionEvent event) {
     	this.txtResult.clear();
-    	List <Match> result= new ArrayList <>(model.trovaPercorso(this.cmbM1.getValue(), this.cmbM2.getValue()));
-    	for(Match mm: result) {
-    		this.txtResult.appendText(mm.toString()+"\n");
+    	Match m1= this.cmbM1.getValue();
+    	Match m2= this.cmbM2.getValue();
+    	if(m1==null || m2==null) {
+    		this.txtResult.setText("Seleziona entrambe i match");
+    		return;
     	}
+    	if(m1.equals(m2)) {
+    		this.txtResult.setText("Selezionata due matches diversi!");
+    		return;
+    	}
+    	if(m1.getTeamHomeID()!=m2.getTeamHomeID() && m1.getTeamAwayID()!=m2.getTeamAwayID() && m1.getTeamAwayID()!=m2.getTeamHomeID()) {
+    		List <Match> result= model.trovaPercorso(m1, m2);
+    		for(Match m: result) {
+    			this.txtResult.appendText(m.toString()+"\n");
+    		}
+    		
+    	}
+    	else {
+    		this.txtResult.setText("Seleziona due match con le squadre diverse!");
+    		return;
+    	}
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -119,7 +146,7 @@ public class FXMLController {
     }
     
     public void setModel(Model model) {
-    	this.model = model;
+    	this.model=model;
     	this.cmbMese.getItems().add("Gennaio");
     	this.cmbMese.getItems().add("Febbraio");
     	this.cmbMese.getItems().add("Marzo");
@@ -132,37 +159,38 @@ public class FXMLController {
     	this.cmbMese.getItems().add("Ottobre");
     	this.cmbMese.getItems().add("Novembre");
     	this.cmbMese.getItems().add("Dicembre");
+    	
   
     }
     
-    public int mese(String mese) {
-    	int mm=0;
+    
+    public int ottieniMese (String mese) {
     	if(mese.equals("Gennaio"))
-    		mm=1;
+    		return 1;
     	if(mese.equals("Febbraio"))
-    		mm=2;
+    		return 2;
     	if(mese.equals("Marzo"))
-    		mm=3;
+    		return 3;
     	if(mese.equals("Aprile"))
-    		mm=4;
+    		return 4;
     	if(mese.equals("Maggio"))
-    		mm=5;
+    		return 5;
     	if(mese.equals("Giugno"))
-    		mm=6;
+    		return 6;
     	if(mese.equals("Luglio"))
-    		mm=7;
+    		return 7;
     	if(mese.equals("Agosto"))
-    		mm=8;
+    		return 8;
     	if(mese.equals("Settembre"))
-    		mm=9;
+    		return 9;
     	if(mese.equals("Ottobre"))
-    		mm=10;
+    		return 10;
     	if(mese.equals("Novembre"))
-    		mm=11;
+    		return 11;
     	if(mese.equals("Dicembre"))
-    		mm=12;
-    	return mm;
+    		return 12;
+    	return -1;
     }
     
-    
+  
 }

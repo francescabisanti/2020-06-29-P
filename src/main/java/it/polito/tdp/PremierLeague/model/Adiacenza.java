@@ -1,10 +1,13 @@
 package it.polito.tdp.PremierLeague.model;
 
-public class Adiacenza {
+public class Adiacenza implements Comparable <Adiacenza>{
 	private Match m1;
 	private Match m2;
-	private double peso;
-	public Adiacenza(Match m1, Match m2, double peso) {
+	private Double peso;
+	
+	
+	
+	public Adiacenza(Match m1, Match m2, Double peso) {
 		super();
 		this.m1 = m1;
 		this.m2 = m2;
@@ -22,45 +25,23 @@ public class Adiacenza {
 	public void setM2(Match m2) {
 		this.m2 = m2;
 	}
-	public double getPeso() {
+	public Double getPeso() {
 		return peso;
 	}
-	public void setPeso(double peso) {
+	public void setPeso(Double peso) {
 		this.peso = peso;
 	}
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((m1 == null) ? 0 : m1.hashCode());
-		result = prime * result + ((m2 == null) ? 0 : m2.hashCode());
-		return result;
-	}
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Adiacenza other = (Adiacenza) obj;
-		if (m1 == null) {
-			if (other.m1 != null)
-				return false;
-		} else if (!m1.equals(other.m1))
-			return false;
-		if (m2 == null) {
-			if (other.m2 != null)
-				return false;
-		} else if (!m2.equals(other.m2))
-			return false;
-		return true;
+	public int compareTo(Adiacenza o) {
+		
+		return o.peso.compareTo(this.peso);
 	}
 	@Override
 	public String toString() {
-		return "[m1=" + m1 + ", m2=" + m2 + ", peso=" + peso + "]";
+		return  "["+ m1.getMatchID() + "] " + m1.getTeamHomeNAME()+" vs "+m1.getTeamAwayNAME() +" - " + "["+ m2.getMatchID() + "] " + m2.getTeamHomeNAME()+" vs "+m2.getTeamAwayNAME() +" ("+peso+")\n";
 	}
+	
+	
 	
 	
 }

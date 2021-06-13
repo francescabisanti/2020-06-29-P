@@ -14,114 +14,93 @@ import it.polito.tdp.PremierLeague.db.PremierLeagueDAO;
 
 public class Model {
 	SimpleWeightedGraph <Match, DefaultWeightedEdge> grafo;
-	List <Match> migliore;
-	double pesoMax;
+	
 	PremierLeagueDAO dao;
 	Map <Integer, Match> idMap;
+	List<Match> migliore;
+	double pesoMax;
 	public Model() {
 		dao= new PremierLeagueDAO();
-		
-	}
-	
-	public void creaGrafo(int minuti, int mese) {
 		idMap= new HashMap <Integer, Match>();
-		grafo= new SimpleWeightedGraph <Match, DefaultWeightedEdge> (DefaultWeightedEdge.class);
-		dao.getVertici(mese, idMap);
-		Graphs.addAllVertices(this.grafo, idMap.values());
-		List <Adiacenza> aaa= new ArrayList <>(dao.getAdiacenza(mese, idMap, minuti));
-		for(Adiacenza a: aaa) {
-			DefaultWeightedEdge e= this.grafo.getEdge(a.getM1(), a.getM2());
-			if(e==null) {
-				Graphs.addEdgeWithVertices(this.grafo, a.getM1(), a.getM2(), a.getPeso());
-			}
-		}
+		dao.listAllMatches(idMap);
+		
 	}
 	
-	public List<Adiacenza> connessioniMax(int minuti, int mese, Map <Integer, Match>idMap){
-		List <Adiacenza> totali= new ArrayList <>(dao.getAdiacenza(mese, idMap, minuti));
-		Adiacenza a1= totali.get(0);
-		List <Adiacenza> result= new ArrayList <>();
-		result.add(a1);
-		for(Adiacenza aa: totali) {
-			if(!aa.equals(a1)&& aa.getPeso()==a1.getPeso())
-				result.add(aa);
-				
+	public void creaGrafo (int minuti, int mese) {
+		grafo= new SimpleWeightedGraph <Match, DefaultWeightedEdge> (DefaultWeightedEdge.class);
+		Graphs.addAllVertices(this.grafo, dao.getVertici(idMap, mese));
+		for(Adiacenza a :dao.getAdiacenze(idMap, mese, minuti)) {
+			if(grafo.containsVertex(a.getM1())&& grafo.containsVertex(a.getM2()))
+				Graphs.addEdge(this.grafo, a.getM1(), a.getM2(), a.getPeso());
 		}
 		
 		
+	}
+	
+	public List<Adiacenza>getAdiacenza (int minuti, int mese) {
+		List <Adiacenza>result=new ArrayList <Adiacenza>();
+		
+		double pesoMax=0;
+		for(Adiacenza aa: dao.getAdiacenze(idMap, mese, minuti)) {
+			if(aa.getPeso()>pesoMax)
+				pesoMax=aa.getPeso();
+		}
+		for(Adiacenza a: dao.getAdiacenze(idMap, mese, minuti)) {
+			if(a.getPeso()==pesoMax)
+				result.add(a);
+		}
 		
 		return result;
 	}
 	
-	
 	public int getNVertici() {
 		return this.grafo.vertexSet().size();
 	}
+	
 	public int getNArchi() {
 		return this.grafo.edgeSet().size();
 	}
-	
-	public List <Match> trovaPercorso (Match partenza, Match destinazione){
-		migliore= new ArrayList<>();
-		List <Match> parziale= new ArrayList <>();
-		parziale.add(partenza);
-		cerca(destinazione, parziale);
-		pesoMax=0;
-		return migliore;
-		
-	}
-	
-	
-	
-	private void cerca(Match destinazione, List<Match> parziale) {
-		//caso Terminale
-		if(parziale.get(parziale.size()-1).equals(destinazione)) {
-			double peso=this.calcolaPeso(parziale);
-			if(peso>pesoMax) {
-				pesoMax=peso;
-				migliore= new ArrayList<>(parziale);
-				
-			}
-			return;
-		}
-		for(Match vicino: Graphs.neighborListOf(this.grafo,parziale.get( parziale.size()-1))) {
-			if(!parziale.contains(vicino)&& isOkay(vicino, destinazione)) {
-				parziale.add(vicino);
-				cerca(destinazione, parziale);
-				parziale.remove(parziale.size()-1);
-			}
-		}
-		
-	}
-
-	private boolean isOkay(Match vicino, Match destinazione) {
-		int casaVicino= vicino.getTeamHomeID();
-		int casaDest= destinazione.getTeamHomeID();
-		int ospiteVicino= vicino.getTeamAwayID();
-		int ospiteDest= destinazione.getTeamAwayID();
-		if(casaVicino==casaDest || ospiteVicino== ospiteDest) {
-			if(ospiteVicino==casaDest || ospiteVicino== casaVicino)
-				return false;
-		}
-			
-		return true;
-	}
-
-	public double calcolaPeso(List<Match> parziale) {
-		double peso=0;
-		for(int i=0;i<parziale.size()-1;i++) {
-			Match primo=parziale.get(i);
-			Match secondo=parziale.get(i+1);
-			peso+=grafo.getEdgeWeight(grafo.getEdge(primo, secondo));
-		}
-		return peso;
-	}
-	
-	
-	
 
 	public SimpleWeightedGraph<Match, DefaultWeightedEdge> getGrafo() {
 		return grafo;
+	}
+	
+	public List<Match> trovaPercorso( Match m1, Match m2){
+		this.migliore= new ArrayList <Match>();
+		this.pesoMax=0.0;
+		List <Match> parziale= new ArrayList<>();
+		parziale.add(m1);
+		cerca(m2, parziale);
+		return migliore;
+	}
+
+	private void cerca(Match m2, List<Match> parziale) {
+		if(parziale.get(parziale.size()-1).equals(m2)) {
+		if(calcolaPeso(parziale)>this.pesoMax) {
+			this.migliore= new ArrayList<>(parziale);
+			this.pesoMax=calcolaPeso(parziale);
+		}	
+		}
+		Match ultimo= parziale.get(parziale.size()-1);
+		for(Match m: Graphs.neighborListOf(this.grafo, ultimo)) {
+			if(!parziale.contains(m)&& m.teamHomeID!=ultimo.teamHomeID && m.teamAwayID!=ultimo.teamAwayID && m.teamAwayID!=ultimo.teamHomeID) {
+				parziale.add(m);
+				cerca(m2,parziale);
+				parziale.remove(parziale.size()-1);
+				
+			}
+		}
+		
+	}
+
+	private double calcolaPeso(List<Match> parziale) {
+		double pesoTot=0.0;
+		for(int i=1; i<parziale.size(); i++) {
+			Match a= parziale.get(i-1);
+			Match b=parziale.get(i);
+			pesoTot=pesoTot+grafo.getEdgeWeight(grafo.getEdge(a, b));
+		}
+		return pesoTot;
 	}
 
 	public void setGrafo(SimpleWeightedGraph<Match, DefaultWeightedEdge> grafo) {
