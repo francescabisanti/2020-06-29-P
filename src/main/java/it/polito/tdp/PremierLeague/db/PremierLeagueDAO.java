@@ -93,8 +93,8 @@ public class PremierLeagueDAO {
 		}
 	}
 	
-	public List <Match> getVertici(Map <Integer, Match>idMap, int mese){
-		String sql = "SELECT DISTINCT m.MatchID AS id "
+	public List <Match> getVertici(Map<Integer, Match>idMap, int mese){
+		String sql="SELECT DISTINCT m.MatchID AS id "
 				+ "FROM matches m "
 				+ "WHERE MONTH(m.Date)=? ";
 		List<Match> result = new ArrayList<Match>();
@@ -104,18 +104,18 @@ public class PremierLeagueDAO {
 			PreparedStatement st = conn.prepareStatement(sql);
 			st.setInt(1, mese);
 			ResultSet res = st.executeQuery();
+			
 			while (res.next()) {
 
+				
 				Match m= idMap.get(res.getInt("id"));
-				if(m!=null)
+				if(m!=null) {
 					result.add(m);
-				
-				
+				}
 
 			}
 			conn.close();
 			return result;
-			
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -123,13 +123,13 @@ public class PremierLeagueDAO {
 		}
 	}
 	
-	public List <Adiacenza> getAdiacenze(Map <Integer, Match>idMap, int mese, int minuti){
-		String sql = "SELECT DISTINCT m1.MatchID AS id1, m2.MatchID AS id2, COUNT(*) AS peso "
-				+ "FROM matches m1, matches m2, actions a1, actions a2 "
-				+ "WHERE MONTH(m1.Date)=? AND MONTH(m2.Date)=? AND m1.MatchID> m2.MatchID AND a1.MatchID= m1.MatchID AND a2.MatchID= m2.MatchID AND a1.PlayerID= a2.PlayerID AND a1.TimePlayed>=? AND a2.TimePlayed>=? "
-				+ "GROUP BY m1.MatchID, m2.MatchID "
-				+ "HAVING peso>0 ";
-		
+	public List <Adiacenza> getAdiacenza(Map<Integer, Match>idMap, int mese, int minuti){
+		String sql="SELECT a1.MatchID AS mt1, a2.MatchID AS mt2, COUNT(*) AS peso "
+				+ "FROM actions a1, actions a2, matches m1, matches m2 "
+				+ "WHERE a1.MatchID> a2.MatchID AND a1.PlayerID=a2.PlayerID "
+				+ "AND m1.MatchID=a1.MatchID AND m2.MatchID=a2.MatchID AND MONTH(m1.Date)=? AND MONTH(m2.Date)=? AND a1.TimePlayed>=? AND a2.TimePlayed>=? "
+				+ "GROUP BY a1.MatchID, a2.MatchID "
+				+ "HAVING peso!=0 ";
 		List<Adiacenza> result = new ArrayList<Adiacenza>();
 		Connection conn = DBConnect.getConnection();
 
@@ -140,28 +140,25 @@ public class PremierLeagueDAO {
 			st.setInt(3, minuti);
 			st.setInt(4, minuti);
 			ResultSet res = st.executeQuery();
+			
 			while (res.next()) {
 
-				Match m1=idMap.get(res.getInt("id1"));
-				Match m2=idMap.get(res.getInt("id2"));
-				double peso= res.getDouble("peso");
-				if(m1!=null && m2!=null) {
-					Adiacenza a = new Adiacenza(m1,m2, peso);
+				
+				Match m1= idMap.get(res.getInt("mt1"));
+				Match m2= idMap.get(res.getInt("mt2"));
+				if(m1!=null&& m2!=null) {
+					Adiacenza a= new Adiacenza (m1, m2, res.getDouble("peso"));
 					result.add(a);
 				}
-				
 
 			}
 			conn.close();
-			Collections.sort(result);
 			return result;
-			
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
-	
 	
 }

@@ -9,7 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import it.polito.tdp.PremierLeague.model.Adiacenza;
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Model;
 import javafx.event.ActionEvent;
@@ -56,79 +57,63 @@ public class FXMLController {
     @FXML
     void doConnessioneMassima(ActionEvent event) {
     	this.txtResult.clear();
-    	String mS= this.txtMinuti.getText();
-    	int minuti;
-    	try {
-    		minuti=Integer.parseInt(mS);
-    		
-    	}catch(NumberFormatException e ) {
-    		this.txtResult.setText("Inserisci un valore numerico valido!");
+    	List <DefaultWeightedEdge> result= model.trovaConnMax();
+    	if(this.model.getGrafo()==null) {
+    		this.txtResult.setText("Crea prima il grafo");
     		return;
     	}
-    	String mese= this.cmbMese.getValue();
-    	if(mese==null) {
-    		this.txtResult.appendText("Seleziona un mese!");
-    		return;
+    	this.txtResult.appendText("Coppie con connessione massima\n");
+    	for(DefaultWeightedEdge e: result) {
+    		this.txtResult.appendText(model.getGrafo().getEdgeSource(e)+"  -  "+model.getGrafo().getEdgeTarget(e)+" ("+model.getGrafo().getEdgeWeight(e)+")\n");
     	}
-    	int meseInt = this.ottieniMese(mese);
-    	List<Adiacenza> result= this.model.getAdiacenza(minuti, meseInt);
-    	for(Adiacenza a: result)
-    		this.txtResult.appendText(a.toString());
+    	
     	
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	this.txtResult.clear();
-    	String mS= this.txtMinuti.getText();
-    	int minuti;
+    	String mS=this.txtMinuti.getText();
+    	Integer minuti;
     	try {
     		minuti=Integer.parseInt(mS);
+    	}catch(NumberFormatException e) {
+    		this.txtMinuti.setText("Inserisci un numero valido!");
+    		return;
+    	}
+    	String meseS=this.cmbMese.getValue();
+    	int mese= this.ottieniMese(meseS);
+    	this.model.creaGrafo(mese, minuti);
+    	if(this.model.getGrafo()==null) {
+    		this.txtResult.setText("Crea il grafo!");
+    		return;
     		
-    	}catch(NumberFormatException e ) {
-    		this.txtResult.setText("Inserisci un valore numerico valido!");
-    		return;
     	}
-    	String mese= this.cmbMese.getValue();
-    	if(mese==null) {
-    		this.txtResult.appendText("Seleziona un mese!");
-    		return;
-    	}
-    	int meseInt = this.ottieniMese(mese);
-    	
-    	this.txtResult.appendText("Grafo creato...\n");
-    	this.model.creaGrafo(minuti, meseInt);
+    	this.txtResult.appendText("Creazione grafo...\n");
     	this.txtResult.appendText("#VERTICI: "+this.model.getNVertici()+"\n");
     	this.txtResult.appendText("#ARCHI: "+this.model.getNArchi()+"\n");
-    	this.cmbM1.getItems().addAll(model.getGrafo().vertexSet());
-    	this.cmbM2.getItems().addAll(model.getGrafo().vertexSet());
-    	
-    	
+    	for(Match m: model.getGrafo().vertexSet()) {
+    		this.cmbM1.getItems().add(m);
+    		this.cmbM2.getItems().add(m);
+    	}
     }
 
     @FXML
     void doCollegamento(ActionEvent event) {
     	this.txtResult.clear();
+    	if(model.getGrafo()==null) {
+    		this.txtResult.setText("Crea prima il grafo");
+    		return;
+    	}
     	Match m1= this.cmbM1.getValue();
     	Match m2= this.cmbM2.getValue();
-    	if(m1==null || m2==null) {
-    		this.txtResult.setText("Seleziona entrambe i match");
-    		return;
-    	}
     	if(m1.equals(m2)) {
-    		this.txtResult.setText("Selezionata due matches diversi!");
+    		this.txtResult.setText("Seleziona due match diversi");
     		return;
     	}
-    	if(m1.getTeamHomeID()!=m2.getTeamHomeID() && m1.getTeamAwayID()!=m2.getTeamAwayID() && m1.getTeamAwayID()!=m2.getTeamHomeID()) {
-    		List <Match> result= model.trovaPercorso(m1, m2);
-    		for(Match m: result) {
-    			this.txtResult.appendText(m.toString()+"\n");
-    		}
-    		
-    	}
-    	else {
-    		this.txtResult.setText("Seleziona due match con le squadre diverse!");
-    		return;
+    	List <Match> result= model.trovaPercorsoMigliore(m1, m2);
+    	for(Match m: result) {
+    		this.txtResult.appendText(m.toString()+"\n");
     	}
     	
     }
@@ -143,6 +128,35 @@ public class FXMLController {
         assert cmbM2 != null : "fx:id=\"cmbM2\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtResult != null : "fx:id=\"txtResult\" was not injected: check your FXML file 'Scene.fxml'.";
 
+    }
+    public int ottieniMese(String mese) {
+    	if(mese.equals("Gennaio"))
+    		return 1;
+    	else if(mese.equals("Febbraio"))
+    		return 2;
+    	else if(mese.equals("Marzo"))
+    		return 3;
+    	else if(mese.equals("Aprile"))
+    		return 4;
+    	else if(mese.equals("Maggio"))
+    		return 5;
+    	else if(mese.equals("Giugno"))
+    		return 6;
+    	else if(mese.equals("Luglio"))
+    		return 7;
+    	else if(mese.equals("Agosto"))
+    		return 8;
+    	else if(mese.equals("Settembre"))
+    		return 9;
+    	else if(mese.equals("Ottobre"))
+    		return 10;
+    	else if(mese.equals("Novembre"))
+    		return 11;
+    	else if(mese.equals("Dicembre"))
+    		return 12;
+    	else
+    		return -1;
+    	
     }
     
     public void setModel(Model model) {
@@ -164,33 +178,7 @@ public class FXMLController {
     }
     
     
-    public int ottieniMese (String mese) {
-    	if(mese.equals("Gennaio"))
-    		return 1;
-    	if(mese.equals("Febbraio"))
-    		return 2;
-    	if(mese.equals("Marzo"))
-    		return 3;
-    	if(mese.equals("Aprile"))
-    		return 4;
-    	if(mese.equals("Maggio"))
-    		return 5;
-    	if(mese.equals("Giugno"))
-    		return 6;
-    	if(mese.equals("Luglio"))
-    		return 7;
-    	if(mese.equals("Agosto"))
-    		return 8;
-    	if(mese.equals("Settembre"))
-    		return 9;
-    	if(mese.equals("Ottobre"))
-    		return 10;
-    	if(mese.equals("Novembre"))
-    		return 11;
-    	if(mese.equals("Dicembre"))
-    		return 12;
-    	return -1;
-    }
+  
     
   
 }
